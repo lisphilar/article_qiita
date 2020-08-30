@@ -6,10 +6,15 @@ class IterClass(object):
     Iterable class.
 
     Args:
-        values (list[int]): list of values
+        values (list[object] or tuple(object)): list of values
+
+    Raises:
+        TypeError: @values is not a list/tuple
     """
 
     def __init__(self, values):
+        if not isinstance(values, (list, tuple)):
+            raise TypeError("@values must be a list or tuple.")
         self._values = values
 
     def __iter__(self):
