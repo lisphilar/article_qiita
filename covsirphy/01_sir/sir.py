@@ -21,6 +21,8 @@ def main():
     model = cs.SIR
     area = {"country": "Full", "province": model.NAME}
     example_data.add(model, **area)
+    # Change parameter values if needed
+    # example_data.add(model, param_dict={"rho": 0.4, "sigma": 0.0150}, **area)
     # Records with model variables
     df = example_data.specialized(model, **area)
     # Plotting

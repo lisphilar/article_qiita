@@ -1,9 +1,12 @@
+# [CovsirPhy] COVID-19データ解析用Pythonパッケージ: SIR model
+
 ## Introduction
 
-COVID-19のデータ（PCR陽性者数など）のデータを簡単にダウンロードして解析できるPythonパッケージ [CovsirPhy](https://github.com/lisphilar/covid19-sir)を作っております。紹介記事第1弾です。英語版のドキュメントは[CovsirPhy: COVID-19 analysis with phase-dependent SIRs](https://lisphilar.github.io/covid19-sir/index.html), [Kaggle: COVID-19 data with SIR model](https://www.kaggle.com/lisphilar/covid-19-data-with-sir-model)にて公開しています。
+COVID-19のデータ（PCR陽性者数など）のデータを簡単にダウンロードして解析できるPythonパッケージ [CovsirPhy](https://github.com/lisphilar/covid19-sir)を作成しています。パッケージを使用した解析例、作成にあたって得られた知識（Python, GitHub, Sphinx,...）に関する記事を今後公開する予定です。
+
+英語版のドキュメントは[CovsirPhy: COVID-19 analysis with phase-dependent SIRs](https://lisphilar.github.io/covid19-sir/index.html), [Kaggle: COVID-19 data with SIR model](https://www.kaggle.com/lisphilar/covid-19-data-with-sir-model)にて公開しています。
 
 **今回は基本モデルSIR modelについて紹介します。**実データは出てきません。
-
 英語版：[Usage (details: theoretical datasets)](https://lisphilar.github.io/covid19-sir/usage_theoretical.html)
 
 ## 1. 実行環境
@@ -27,8 +30,8 @@ cs.__version__
 | OS | Windows Subsystem for Linux |
 | Python | version 3.8.5 |
 
-## 2. SIR モデル式
-Susceptible（感受性保持者）がInfected（感染者）と接触したとき感染する確率をEffective contact rate $\beta$ [1/min]と定義します。$\gamma$ [1/min]はInfectedからRecovered（回復者）に移行する確率です[^1][^2]。
+## 2. SIR modelとは
+Susceptible（感受性保持者）がInfected（感染者）と接触したとき、感染する確率をEffective contact rate $\beta$ [1/min]と定義します。$\gamma$ [1/min]はInfectedからRecovered（回復者）に移行する確率です[^1][^2]。
 
 [^1]: [Learning Scientific Programming with Python: The SIR epidemic model](https://scipython.com/book/chapter-8-scipy/additional-examples/the-sir-epidemic-model/)  
 [^2]: [Wikipedia: SIRモデル](https://ja.wikipedia.org/wiki/SIR%E3%83%A2%E3%83%87%E3%83%AB)  
@@ -40,7 +43,7 @@ Susceptible（感受性保持者）がInfected（感染者）と接触したと�
 ```
 
 ## 3. 連立常微分方程式
-総人口$N = S + I + R$より、
+総人口$N = S + I + R$として、
 
 ```math
 \begin{align*}
@@ -51,7 +54,7 @@ Susceptible（感受性保持者）がInfected（感染者）と接触したと�
 ```
 
 ## 4. 無次元パラメータ
-このまま扱っても良いですが、パラメータの値域を$(0, 1)$に限定するため無次元化します。今回の記事では出てきませんが、実データからパラメータを計算する際に効果を発揮します。
+このまま扱っても良いですが、パラメータの範囲を$(0, 1)$に限定するため無次元化します。今回の記事では出てきませんが、実データからパラメータを計算する際に効果を発揮します。
 
 $(S, I, R) = N \times (x, y, z)$, $(T, \beta, \gamma) = (\tau t, \tau^{-1}\rho, \tau^{-1}\sigma)$, $1 \leq \tau \leq 1440$ [min]として、
 
@@ -71,8 +74,8 @@ $(S, I, R) = N \times (x, y, z)$, $(T, \beta, \gamma) = (\tau t, \tau^{-1}\rho, 
 \end{align*}
 ```
 
-## 5.（基本/実効）産生産数
-（基本/実効）産生産数 Reproduction numberは次の通り定義されます[^3]。
+## 5.（基本/実効）再生産数
+（基本/実効）再生産数 Reproduction numberは次の通り定義されます[^3]。
 
 [^3]: [Infection Modeling — Part 1 Estimating the Impact of a Pathogen via Monte Carlo Simulation](https://towardsdatascience.com/infection-modeling-part-1-87e74645568a)
 
@@ -94,7 +97,7 @@ pprint(cs.SIR.EXAMPLE, compact=True)
 # 'y0_dict': {'Fatal or Recovered': 0, 'Infected': 1000, 'Susceptible': 999000}}
 ```
 
-（基本/実効）産生産数：
+（基本/実効）再生産数：
 
 ```Python
 # Reproduction number
@@ -116,6 +119,8 @@ example_data = cs.ExampleData(tau=1440, start_date="01Jan2020")
 model = cs.SIR
 area = {"country": "Full", "province": model.NAME}
 example_data.add(model, **area)
+# Change parameter values if needed
+# example_data.add(model, param_dict={"rho": 0.4, "sigma": 0.0150}, **area)
 # Records with model variables
 df = example_data.specialized(model, **area)
 # Plotting
@@ -130,5 +135,5 @@ cs.line_plot(
 ![sir.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/151369/27d51fee-d9f8-3246-1b86-273c38a825a2.png)
 
 
-## 5. 次回
+## 7. 次回
 基本モデルSIR modelをCOVID-19用に改変したモデルSIR-F modelについて紹介します。
