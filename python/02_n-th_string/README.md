@@ -206,17 +206,17 @@ print(int2ordinal(121)) # 121st
 @shiracamusさんよりコメントいただいた、`defaultdict`を使わない方法をご紹介します。
 
 ```Python
-def int2ordinal_4(num):
+def int2ordinal_5(num):
     ordinal_dict = {1: "st", 2: "nd", 3: "rd"}
     q, mod = divmod(num, 10)
     suffix = q % 10 != 1 and ordinal_dict.get(mod) or "th"
     return f"{num}{suffix}"
 
-print(int2ordinal_4(0))
+print(int2ordinal_5(0))
 # -> '0th'
-print(int2ordinal_4(1))
+print(int2ordinal_5(1))
 # -> '1st'
-print(int2ordinal_4(11))
+print(int2ordinal_5(11))
 # -> '11th'
 ```
 
