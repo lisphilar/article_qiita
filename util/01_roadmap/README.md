@@ -44,11 +44,13 @@ Windows 10を使用している場合、可能であればWSL (Windows Subsystem
 
 - [WSLをインストールする](https://qiita.com/matarillo/items/61a9ead4bfe2868a0b86)
 
-### IDEの導入
-IDE (Integrated Development Environment, 統合開発環境)をローカル環境に用意します。多数のプラグインが用意されており、Git操作についてもより簡単に扱えるようになるため、Visual Studio Code (VScode)の使用をおすすめします。
+### Editorの導入
+EditorもしくはIDE (Integrated Development Environment, 統合開発環境)をローカル環境に用意します。
+
+Visual Studio Code (VScode)がおすすめです。多数のプラグインが用意されており、Git操作についてもより簡単に扱えるようになります。
 
 ### 依存パッケージの管理
-pipenvやpoetryが有望のようです。
+pipenvやpoetryが有望のようです。pipenvを使用していますが、頻繁にエラーが出る&遅いため、poetryへの移行を検討中です。
 
 ### 開発ワークフロー
 Git Flow, GitHub Flowなど、ブランチの使用方法やマージのタイミングについて色々な考え方があるようです。個人もしくは数人レベルで開発を行う場合は、そのなかでもシンプルな[Gitlab Flow](https://docs.gitlab.com/ee/topics/gitlab_flow.html)の使用をおすすめします。
@@ -60,12 +62,103 @@ Git Flow, GitHub Flowなど、ブランチの使用方法やマージのタイ�
 
 
 ### Versioning
-大きな流れとして「開発版（GitHubで管理）」と「安定版（PyPIで管理）」の2本立てで開発を行うと便利かと思います。開発版は、上記開発フローによって作成します。マージが発生してissueを閉じた直後に開発版のバージョンを一つあげてください。（バグ修正にてissue#2を閉じた場合の例：2.0.1-alpha.new.1 → 2.0.1-beta.new.1.fix.2）
+大きな流れとして「開発版（GitHubで管理）」と「安定版（PyPIで管理）」の2本立てで開発を行うと便利かと思います。開発版は、上記開発フローによって作成します。
+
+開発バージョンの名前の付け方はあまり定まったものはなさそうでした。私の場合は、マージが発生してissueを閉じた直後に開発版のバージョンを一つあげています。
+
+バグ修正にてissue#2を閉じたとき：2.0.1-alpha.new.1 → 2.0.1-beta.new.1.fix.2
 
 また、多数のissueが閉じた場合や安定版のバグを緊急に修正する必要が発生した場合は安定版のバージョンを[Semantic Versioning](https://semver.org/lang/ja/)にしたがってバージョンを上げてください。
 
 
 ## 2. コーディング
+フォルダ構成などコーディング時に注意の必要な事項をまとめました。
+
+### パッケージの名前
+パッケージの1行説明文を英語で作成、そのなかからアルファベットを選んでパッケージ名にすると、あまり悩まなくて済むと思います。アルファベットの選び順については私は気にしてません（笑）
+
+例：Python package for **COV**ID-19 anal**y**sis with **ph**ase-dependent **SIR**-derived ODE models = **CovsirPhy**
+
+またGoogle検索を使って、他のサービス名と被らないようにしたほうが良いかもしれません。
+
+インストール方法が変わるなど大騒動になるので、後から変更するのは難しいと思います。
+
+### パッケージの識別情報
+poetryを使用する場合は、別ファイルに記載することになりますが、pipenvを依存パッケージの管理に使用している場合は`setup.py`, `setup.cfg`というファイルをrepositoryのトップに作成してください。
+
+```Python:setup.py
+from setuptools import setup
+setup()
+```
+
+```Python:setup.cfg
+[metadata]
+name = パッケージ名
+version = attr: パッケージ名.__version__.__version__
+url = レポジトリなどのURL
+author = 著者名
+author_email = メールアドレス
+license = Apache License 2.0
+license_file = LICENSE
+description = パッケージの1行説明
+long_description = file: README.rst
+keywords = キーワード
+classifiers =
+    Development Status :: 5 - Production/Stable
+    License :: OSI Approved :: Apache Software License
+    Programming Language :: Python :: 3.7
+    Programming Language :: Python :: 3.8
+
+
+[options]
+packages = find:
+install_requires =
+    # 依存パッケージ名
+    numpy
+    matplotlib
+```
+
+日本語で記載した部分やライセンス名などは適宜置き換えてください！
+また、依存パッケージを追加した場合は随時"install_requires"欄への追加が必要となります。
+
+
+### フォルダ構成
+Repositoryのトップに、パッケージ名のフォルダ（またはsrcフォルダ）を作成してください。その中にまず、`__version__.py`及び`__init__.py`という空ファイルを作成してください。
+
+そしてフォルダ構成（モジュール構成）を決めましょう。循環インポート[^1]を避けるため、`src/A/a1.py`を`src/B/b1.py`がインポートしかつ`src/B/b2.py`を`src/A/a2.py`がインポートする、ということが起こらないようにしましょう。開発環境ではエラーにならないが安定版をpip installするとエラーになる場合があるようで、苦労したことがあります。この修正だけのために2回バッチ番号を上げました。
+
+[^1]: [Pythonで循環インポートするとどうなるのか](http://www.freia.jp/taka/blog/python-recursive-import/index.html)
+
+`setup.cfg`ではなく`src/__version__.py`で管理すると、パッケージ内でもバージョン番号を取得・表示できるようになるので便利です。
+
+```Python:__version__.py
+__version__ = "0.1.0"
+```
+
+以下は`src/util/plotting.py`に`line_plot`という関数を作成した場合です。`from src.util.plotting import line_plot`と書くことにより、pip installした際に`from src.util.plotting import line_plot`ではなく`from src import line_plot`と呼び出せるようになります。
+
+```Python:__init__.py
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# version
+from src.__version__ import __version__
+# util
+from src.util.plotting import line_plot
+
+
+def get_version():
+    """
+    Return the version number, like パッケージ名 v0.0.0
+    """
+    return f"パッケージ名 v{__version__}"
+
+
+__all__ = ["line_plot"]
+```
+
+`__all__ = ["line_plot"]`と書くと、pylintなどのコード整形ツールの修正確認を回避できるようになります（pylintの設定を変更して修正確認を表示させないこともできますが）。また、`from src import *`とするだけで`line_plot`を使用できるようになります。ただし、`import *`は推奨されていません...
+
 
 ## 3. テストの運用
 
