@@ -202,4 +202,46 @@ print(int2ordinal(111)) # 111th
 print(int2ordinal(121)) # 121st
 ```
 
+## 別解（defaultdictを使わない方法）
+@shiracamusさんよりコメントいただいた、`defaultdict`を使わない方法をご紹介します。
+
+```Python
+def int2ordinal_4(num):
+    ordinal_dict = {1: "st", 2: "nd", 3: "rd"}
+    q, mod = divmod(num, 10)
+    suffix = q % 10 != 1 and ordinal_dict.get(mod) or "th"
+    return f"{num}{suffix}"
+
+print(int2ordinal_4(0))
+# -> '0th'
+print(int2ordinal_4(1))
+# -> '1st'
+print(int2ordinal_4(11))
+# -> '11th'
+```
+
+|num|q|mod|q % 10 != 1|ordinal_dict.get(mod)|q % 10 != 1 and ordinal_dict.get(mod)|suffix|
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+|0|0|0|False|None|False|"th"|
+|1|0|1|True|"st"|"st"|"st"|
+|11|1|1|False|"st"|False|"th"|
+
+否定形と`and`を組み合わせるとは...
+
+ここまではなかなか思いつかないとは思いますが、`or`を数値代入に使用する方法は便利です。たとえば、関数について引数のデフォルト値を空のリストを与えたいときに使えます。（関数の引数に`def func(x=[]): x.append(0); return x`などとかくと想定外の挙動を示すので注意！[^2]）
+
+[^2]: [【python】引数のデフォルト値は定義時評価なので注意](https://www.haya-programming.com/entry/2018/11/06/015506)
+
+```Python
+def func(values=None):
+    values = values or []
+    if not isinstance(values, list):
+        raise TypeError(f"@values must be a list or None, but {values} was applied.")
+    values.append(0)
+    return values
+```
+
+`values`がNoneやFalse, 空であったときは空のリスト`[]`が代入されます。それ以外のときは`values`引数がそのまま使用されます。
+
+## あとがき
 以上、Pythonで自然数を序数に変換する方法でした！
