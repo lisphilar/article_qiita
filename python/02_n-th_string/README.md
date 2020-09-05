@@ -2,6 +2,7 @@
 
 ## Contents
 integer型の自然数をstring型の序数（0th, 1st, 2nd, 3rd,..）に変換する方法です。ここでは0も自然数に含みます。
+各コードは[GitHub repository](https://github.com/lisphilar/article_qiita/tree/master/python/02_n-th_string)からダウンロードできます。
 
 ## Rule
 実装の前に、[英語の序数1から1000までの表記と読み方一覧](https://kw-note.com/translation/english-ordinal-numbers/)を参考にしてルールをまず考えます。
