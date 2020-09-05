@@ -27,12 +27,6 @@ def int2ordinal(num):
     ordinal_dict.update({1: "st", 2: "nd", 3: "rd"})
     q, mod = divmod(num, 10)
     suffix = "th" if q % 10 == 1 else ordinal_dict[mod]
-    """
-    if num % 100 == 11:
-        suffix = "th"
-    else:
-        suffix = ordinal_dict[num % 10]
-    """
     return f"{num}{suffix}"
 
 
