@@ -127,7 +127,7 @@ R_t = \rho (1 - \theta) (\sigma + \kappa)^{-1} = \beta (1 - \alpha_1) (\gamma + 
 \end{align*}
 ```
 
-### 6. データ例
+## 6. データ例
 パラメータ$(\theta, \kappa, \rho, \sigma) = (0.002, 0.005, 0.2, 0.075)$及び初期値を設定してグラフ化します。
 
 ```Python
