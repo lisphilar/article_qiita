@@ -63,7 +63,7 @@ oxcgrt_data = data_loader.oxcgrt()
 [^2]: [GitHub issue: CovsirPhy (Python package for COVID-19 analysis) will use COVID-19 Data Hub #87](https://github.com/covid19datahub/COVID19/issues/87)
 
 ## 3. DataLoader class
-データのダウンロードと整形を行うラッパークラスです。以下のように第1引数に"input"と与えると、各データが"input"ディレクトリにダウンロードされます。
+データのダウンロードと整形を行うユーザーインターフェイスです。以下のように第1引数に"input"と与えると、各データが"input"ディレクトリにダウンロードされます。
 
 ```Python
 data_loader = cs.DataLoader("input")
