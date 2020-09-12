@@ -101,7 +101,7 @@ SIR modelなど連立常微分方程式を使って感染症データを扱う�
 [^5]: 10 phases, 8 CPUの並列計算で2分程度かかる。1ヶ国の分析であれば待てるが、データが毎日増えること、多数の国のデータを分析する場合があることを考えると時間がかかって大変。
 
 ## 4. しくみ
-S-R trend analysisを使用すると、感受性保持者数$S$と回復者数$R$の推移からPhaseの分岐点を求めることができます。思いつくまでの過程については長くなるので省略しますが、[Kaggle: COVID-19 data with SIR model, S-R trend analysis](https://www.kaggle.com/lisphilar/covid-19-data-with-sir-model#S-R-trend-analysis)]に記載していますのでぜひご参照ください。
+S-R trend analysisを使用すると、感受性保持者数$S$と回復者数$R$の推移からPhaseの分岐点を求めることができます。思いつくまでの過程については長くなるので省略しますが、[Kaggle: COVID-19 data with SIR model, S-R trend analysis](https://www.kaggle.com/lisphilar/covid-19-data-with-sir-model#S-R-trend-analysis)に記載していますのでぜひご参照ください。
 
 SIR model[^6], SIR-F model[^4]の連立常微分方程式では、$S$, $R$に関して次のようになっています。
 
@@ -136,7 +136,7 @@ S_{(R)} = N e^{-a R}
 \log S_{(R)} = - a R + \log N
 ```
 
-**「モデルのパラメータが一定のとき、x軸を回復者数$R$, y軸を感受性保持者数$S$として片対数グラフを描くと直線になる！」**
+**モデルのパラメータが一定のとき、x軸を回復者数$R$, y軸を感受性保持者数$S$として片対数グラフを描くと直線になる！**
 
 (グラフ：上述のKaggle Notebookより、パラメータを変えたときの直線の傾きの違い)
 
