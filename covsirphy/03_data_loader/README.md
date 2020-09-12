@@ -58,7 +58,7 @@ oxcgrt_data = data_loader.oxcgrt()
 - 各国・各地域の人口データ
 - [Oxford Covid-19 Government Response Tracker (OxCGRT)](https://github.com/OxCGRT/covid-policy-tracker): COVID-19に対する各国の対策状況を数値化したデータ
 
-データ整形はCovsirPhy側で行っていますが、データのダウンロード自体は[COVID-19 Data Hub](https://covid19datahub.io/)公式のパッケージ`covid19dh`に依存しています。開発者の方とも随時情報交換[^2]してエラーが発生しないように努めていますが、何かあれば[CovsirPhyのissueページ](https://github.com/lisphilar/covid19-sir/issues)からご連絡ください！
+データ整形はCovsirPhy側で行っていますが、データのダウンロード自体は[COVID-19 Data Hub](https://covid19datahub.io/)公式のパッケージ`covid19dh`に依存しています。開発者の方とも連携[^2]してエラーが発生しないように努めていますが、何かあれば[CovsirPhyのissueページ](https://github.com/lisphilar/covid19-sir/issues)からご連絡ください！
 
 [^2]: [GitHub issue: CovsirPhy (Python package for COVID-19 analysis) will use COVID-19 Data Hub #87](https://github.com/covid19datahub/COVID19/issues/87)
 
@@ -111,7 +111,7 @@ jhu_data.cleaned().tail()
 | 211101 | 2020-09-10 | Colombia  | Vichada    |          14 |          0 |       0 |          14 |
 | 211102 | 2020-09-11 | Colombia  | Vichada    |          14 |          0 |       0 |          14 |
 
-国によっては国全体の値と地方ごとの値が両方登録されていますので、`df = jhu_data.cleaned(); df.groupby("Country").sum()`では国別の正しい集計データを取得できません。そのため特定の国や地域のデータを取り出すメソッド`JHUData.subset(country, province)`を用意しました。出力結果からは国名と地域名の列が省略されます。
+国によっては国全体の値と地方ごとの値が両方登録されていますので、`jhu_data.cleaned().groupby("Country").sum()`では国別の正しい集計データを取得できません。そのため特定の国や地域のデータを取り出すメソッド`JHUData.subset(country, province)`を用意しました。出力結果からは国名と地域名の列が省略されます。
 
 ```Python
 # 国名のみ選択 -> (出力結果は省略)
@@ -130,7 +130,7 @@ jhu_data.subset(country="JPN", province="Tokyo").tail()
 | 175 | 2020-09-10 |       22444 |       2478 |     379 |       19587 |
 | 176 | 2020-09-11 |       22631 |       2439 |     380 |       19812 |
 
-注意：4次データ（都/国/有志の国内団体/COVID-19 DataHub）であり、東京都発表の数値とは異なる場合があります。
+注意：4次データ（都/国/有志の国内団体/COVID-19 Data Hub）であり、東京都発表の数値とは異なる場合があります。
 
 時系列グラフを作成したい場合は`cs.line_plot()`関数をどうぞ（関数を非推奨にしてクラス化する可能性あり、検討中）。
 
