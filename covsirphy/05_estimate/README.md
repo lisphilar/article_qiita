@@ -255,8 +255,8 @@ fh.write(snl.summary(columns=cols).to_markdown())
 snl.history(target="1/beta [day]", filename=None)
 ```
 
-## 6. 実効産生産数の推移
-SIR-F model[^4]の基本/実効産生産数Rtは次の通り定義しています。
+## 6. 実効再生産数の推移
+SIR-F model[^4]の基本/実効再生産数Rtは次の通り定義しています。
 
 ```math
 \begin{align*}
