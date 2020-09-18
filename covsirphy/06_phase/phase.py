@@ -4,6 +4,11 @@
 import covsirphy as cs
 
 
+def md(scenario, filename, name=None):
+    with open(filename, "w") as fh:
+        fh.write(scenario.summary(name=name).to_markdown())
+
+
 def main():
     print(cs.__version__)
     # Data loading
@@ -19,9 +24,28 @@ def main():
     snl.records(filename="records.jpg")
     # S-R trend analysis
     snl.trend(filename="trend.jpg")
-    # Summary
     with open("trend.md", "w") as fh:
         fh.write(snl.summary().to_markdown())
+    # Disable
+    snl.clear(name="A")
+    snl.disable(phases=["0th", "3rd"], name="A")
+    md(snl, "A.md", "A")
+    snl.enable(phases=["0th"], name="A")
+    md(snl, "A2.md", "A")
+    # Delete 0th phase
+    snl.clear(name="B")
+    snl.delete(phases=["0th"], name="B")
+    md(snl, "B.md", "B")
+    snl.enable(phases=["0th"], name="B")
+    md(snl, "B2.md", "B2")
+    # Delete 3rd phase
+    snl.clear(name="C")
+    snl.delete(phases=["3rd"], name="C")
+    md(snl, "C.md", "C")
+    # Delete last phase
+    snl.clear(name="D")
+    snl.delete(phases=["6th", "7th"], name="D")
+    md(snl, "D.md", "D")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# [CovsirPhy] COVID-19データ解析用Pythonパッケージ: Phase setting
+# [CovsirPhy] COVID-19データ解析用Pythonパッケージ: Phase設定の最適化
 
 ## Introduction
 
@@ -6,13 +6,13 @@ COVID-19のデータ（PCR陽性者数など）のデータを簡単にダウン
 
 紹介記事：
 
-- [SIR model](https://qiita.com/Lisphilar/items/ac5a5fda02d8359d6a94)
-- [SIR-F model](https://qiita.com/Lisphilar/items/99c1e7673bc13d77dfcc)
-- [Data loading](https://qiita.com/Lisphilar/items/34337bd89ad485ec4a4b)
-- [S-R trend analysis](https://qiita.com/Lisphilar/items/a0754e978172f20f6c4a)
-- [Parameter estimation](https://qiita.com/Lisphilar/items/bf0f2af9f0c688e23cd9)
+1. [SIR model](https://qiita.com/Lisphilar/items/ac5a5fda02d8359d6a94)
+2. [SIR-F model](https://qiita.com/Lisphilar/items/99c1e7673bc13d77dfcc)
+3. [Data loading](https://qiita.com/Lisphilar/items/34337bd89ad485ec4a4b)
+4. [S-R trend analysis](https://qiita.com/Lisphilar/items/a0754e978172f20f6c4a)
+5. [Parameter estimation](https://qiita.com/Lisphilar/items/bf0f2af9f0c688e23cd9)
 
-**今回はPhase setting（ODE modelのパラメータが一定となる期間ごとに分割する方法）のご紹介です。**
+**今回はPhase設定の最適化方法についてご説明します。**
 
 英語版のドキュメントは[CovsirPhy: COVID-19 analysis with phase-dependent SIRs](https://lisphilar.github.io/covid19-sir/index.html), [Kaggle: COVID-19 data with SIR model](https://www.kaggle.com/lisphilar/covid-19-data-with-sir-model)をご参照ください。
 
@@ -62,13 +62,9 @@ print(japan_data.citation)
 ```Python
 # 解析用クラスのインスタンス生成
 snl = cs.Scenario(jhu_data, population_data, country="Japan")
-# 実データの確認
+# 実データのグラフ表示
 snl.records(filename=None)
 ```
-
-実データのグラフ：
-
-
 
 ## 3. scenarioとは
 Covsirphyの`Scenario`クラスでは、Phase[^3]の設定内容を複数種類登録することができます。「Phase[^3]の設定内容」を"scenario"と呼んでおり、内部的には`PhaseSeries`クラスが担当しています（クラス名と名称がずれてしまってすみません...`Scenario`クラスを実装したあとで`PhaseSeries`クラスを作成した結果、こうなりました）。
@@ -83,8 +79,10 @@ Covsirphyの`Scenario`クラスでは、Phase[^3]の設定内容を複数種類�
 
 scenario A, B, Cそれぞれについて0th/1st/2nd phaseのパラメータ推定を行い、1st phaseのパラメータを使って2nd phaseの患者数をシュミレーションし、scenario Cについては2ndから3rdの間に$\rho$が半減すると仮定してシュミレーションを実行すれば、
 
-- Phase設定を最適化したいとき：AとBのパラメータ推定についてRMSLEを比較すればOK
+- **Phase設定を最適化したいとき：AとBのパラメータ推定についてRMSLEを比較すればOK**
 - 10/1に$\rho$が半減した場合の患者数への効果を検討したいとき：BとCの11/1kら12/1の間の患者数推移を比較すればOK
+
+本記事では「Phase設定を最適化したいとき」に焦点を当ててご説明します。
 
 ## 4. シナリオの作成/初期化/削除
 シナリオ自体の作成/初期化/削除方法は次の通りです。デフォルトのシナリオ"Main"とそのほかのシナリオに分けてご説明います。
@@ -114,7 +112,7 @@ Scenario.delete(name="Another")
 ```
 
 ## 5. シナリオの一覧表示
-`Scenario.summary()`メソッドによりシナリオの情報を`pandas.DataFrame`形式で一覧表示できます。表示する情報の種類（一覧の列名）を指定したり、特定のシナリオのみ表示することも可能です。
+`Scenario.summary()`メソッドによりシナリオの情報を`pandas.DataFrame`形式で一覧表示できます。表示する情報の種類（一覧の列名）を指定したり、特定のシナリオのみ表示したりことも可能です。
 
 ```Python
 # すべて表示：
@@ -130,9 +128,12 @@ snl.summary(name="Main")
 なお`Scenario.trend()`, `Scenario.add()`などのメソッドは`self`を返すため、`Scenario.trend().summary()`などとPhaseの編集と一覧表示をコマンド1行でまとめて実行できます。
 
 ## 6. S-R trend analysisによるphase設定
-S-R trend analysis[^3]により自動的にphaseを設定できます。
+以降の章ではphase設定の編集方法を順にご説明します。
+
+まず、S-R trend analysis[^3]により自動的にphaseを設定できます。
 
 ```Python
+# Main: S-R trend analysis
 snl.trend(filename=None).summary()
 ```
 
@@ -147,4 +148,90 @@ snl.trend(filename=None).summary()
 | 6th | Past   | 29Aug2020 | 05Sep2020 |    126529100 |
 | 7th | Past   | 06Sep2020 | 17Sep2020 |    126529100 |
 
-## 7. Future phaseの追加
+## 7. phaseの無効化と有効化
+phaseの期間は変えたくないが、特定のphaseについてはパラメータ推定などをスキップしたい場合、`Scenario.disable(phases)`を使用して当該ののphaseを無効化できます。引数が"phases"と複数形になっていることに注意してください。リストを与える必要があります。
+
+```Python
+# MainをコピーしてScenario Aを作成する
+snl.clear(name="A")
+# A: 0th phaseと3rd phaseを無効化する
+snl.disable(phases=["0th", "3rd"], name="A").summary(name="A")
+```
+
+|     | Type   | Start     | End       |   Population |
+|:----|:-------|:----------|:----------|-------------:|
+| 1st | Past   | 22Apr2020 | 04Jul2020 |    126529100 |
+| 2nd | Past   | 05Jul2020 | 23Jul2020 |    126529100 |
+| 4th | Past   | 02Aug2020 | 14Aug2020 |    126529100 |
+| 5th | Past   | 15Aug2020 | 28Aug2020 |    126529100 |
+| 6th | Past   | 29Aug2020 | 05Sep2020 |    126529100 |
+| 7th | Past   | 06Sep2020 | 17Sep2020 |    126529100 |
+
+一覧から0th/3rd phaseの行がなくなっていますが、他のphaseの開始日や終了日は変更されていません。
+
+また無効化されたphaseは`Scenario.enable(phases)`によって有効化できます。
+
+```Python
+# A: 0th phaseを無効化する
+snl.enable(phases=["0th"], name="A").summary(name="A")
+```
+
+|     | Type   | Start     | End       |   Population |
+|:----|:-------|:----------|:----------|-------------:|
+| 0th | Past   | 06Feb2020 | 21Apr2020 |    126529100 |
+| 1st | Past   | 22Apr2020 | 04Jul2020 |    126529100 |
+| 2nd | Past   | 05Jul2020 | 23Jul2020 |    126529100 |
+| 4th | Past   | 02Aug2020 | 14Aug2020 |    126529100 |
+| 5th | Past   | 15Aug2020 | 28Aug2020 |    126529100 |
+| 6th | Past   | 29Aug2020 | 05Sep2020 |    126529100 |
+| 7th | Past   | 06Sep2020 | 17Sep2020 |    126529100 |
+
+0th phaseが一覧に表示されました。3rd phaseは無効化されたままです。
+
+
+## 7. phaseの削除
+特定のphaseを削除できますが、phaseの位置によって挙動が異なります。
+
+### 0th phaseの場合
+0th phaseは削除できず、`Scenario.delete(phase=["0th"])`としても0th phaseが無効化されるだけで1st phaseの開始日は変わりません。
+
+```Python
+# MainをコピーしてScenario Bを作成する
+snl.clear(name="B")
+# A: 0th phaseと3rd phaseを無効化する
+snl.delete(phases=["0th"], name="B").summary(name="B")
+```
+
+|     | Type   | Start     | End       |   Population |
+|:----|:-------|:----------|:----------|-------------:|
+| 1st | Past   | 22Apr2020 | 04Jul2020 |    126529100 |
+| 2nd | Past   | 05Jul2020 | 23Jul2020 |    126529100 |
+| 3rd | Past   | 24Jul2020 | 01Aug2020 |    126529100 |
+| 4th | Past   | 02Aug2020 | 14Aug2020 |    126529100 |
+| 5th | Past   | 15Aug2020 | 28Aug2020 |    126529100 |
+| 6th | Past   | 29Aug2020 | 05Sep2020 |    126529100 |
+| 7th | Past   | 06Sep2020 | 17Sep2020 |    126529100 |
+
+結果は省略しますが、`Scenario.enable(phases=["0th"])`により再有功化できます。
+
+### 途中のphaseの場合
+0th phaseでもなく、最後尾のphase (今回は7th phase)も含まれない場合、対象のphaseは一つ前のphaseに吸収されます。
+
+```Python
+# MainをコピーしてScenario Cを作成する
+snl.clear(name="C")
+# A: 3rd phaseを削除して2nd phaseに吸収させる
+snl.delete(phases=["3rd"], name="C").summary(name="C")
+```
+
+
+
+
+### 後続phaseがない場合
+7th phaseのみ、あるいは6th phaseと7th phaseの両方を削除する場合など後続のphaseがない場合は、6th/7th phaseに所属していた日付はどのphaseにも所属しない状態になります。
+
+```Python
+# A: 
+snl.clear(name="A")
+snl.delete(phases=["last"], name="A").summary(name="A")
+```
