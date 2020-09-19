@@ -46,6 +46,15 @@ def main():
     snl.clear(name="D")
     snl.delete(phases=["6th", "7th"], name="D")
     md(snl, "D.md", "D")
+    # Add phase with end_date
+    snl.add(end_date="31Aug2020", name="D")
+    md(snl, "D2.md", "D")
+    # Add phase with days
+    snl.add(days=10, name="D")
+    md(snl, "D3.md", "D")
+    # Add phase with end_date=None and days=None
+    snl.add(name="D")
+    md(snl, "D4.md", "D")
 
 
 if __name__ == "__main__":

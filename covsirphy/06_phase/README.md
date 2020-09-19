@@ -95,6 +95,8 @@ scenario A, B, Cそれぞれについて0th/1st/2nd phaseのパラメータ推�
 snl.clear()
 # 初期化（実データの最終日以前を含めてすべてのPhaseを削除する）
 snl.clear(include_past=True)
+# パラメータ推定
+snl.estimate(cs.SIRF)
 ```
 
 ### Another scenario
@@ -107,6 +109,8 @@ snl.clear(name="Another")
 Scenario.clear(name="Another")
 # 初期化（実データの最終日以前を含めてすべてのPhaseを削除する）
 Scenario.clear(name="Another", include_past=True)
+# パラメータ推定
+snl.estimate(cs.SIRF, name="Another")
 # 削除
 Scenario.delete(name="Another")
 ```
@@ -192,7 +196,7 @@ snl.enable(phases=["0th"], name="A").summary(name="A")
 ## 7. phaseの削除
 特定のphaseを削除できますが、phaseの位置によって挙動が異なります。
 
-### 0th phaseの場合
+### (削除) 0th phaseの場合
 0th phaseは削除できず、`Scenario.delete(phase=["0th"])`としても0th phaseが無効化されるだけで1st phaseの開始日は変わりません。
 
 ```Python
@@ -212,9 +216,9 @@ snl.delete(phases=["0th"], name="B").summary(name="B")
 | 6th | Past   | 29Aug2020 | 05Sep2020 |    126529100 |
 | 7th | Past   | 06Sep2020 | 17Sep2020 |    126529100 |
 
-結果は省略しますが、`Scenario.enable(phases=["0th"])`により再有功化できます。
+結果は省略しますが、`Scenario.enable(phases=["0th"])`により再有効化できます。
 
-### 途中のphaseの場合
+### (削除) 途中のphaseの場合
 0th phaseでもなく、最後尾のphase (今回は7th phase)も含まれない場合、対象のphaseは一つ前のphaseに吸収されます。
 
 ```Python
@@ -224,14 +228,79 @@ snl.clear(name="C")
 snl.delete(phases=["3rd"], name="C").summary(name="C")
 ```
 
+|     | Type   | Start     | End       |   Population |
+|:----|:-------|:----------|:----------|-------------:|
+| 0th | Past   | 06Feb2020 | 21Apr2020 |    126529100 |
+| 1st | Past   | 22Apr2020 | 04Jul2020 |    126529100 |
+| 2nd | Past   | 05Jul2020 | 01Aug2020 |    126529100 |
+| 3rd | Past   | 02Aug2020 | 14Aug2020 |    126529100 |
+| 4th | Past   | 15Aug2020 | 28Aug2020 |    126529100 |
+| 5th | Past   | 29Aug2020 | 05Sep2020 |    126529100 |
+| 6th | Past   | 06Sep2020 | 17Sep2020 |    126529100 |
+
+- 実行前：2nd phase (05Jul2020 - 23Jul2020), 3rd phase (24Jul2020 - 01Aug2020)
+- 実行後：2nd phase (05Jul2020 - 01Aug2020)
+
+また、3rd phaseが空になったので4th/5th/6th/7thが3rd/4th/5th/6thにスライドしています。
 
 
-
-### 後続phaseがない場合
+### (削除) 後続phaseがない場合
 7th phaseのみ、あるいは6th phaseと7th phaseの両方を削除する場合など後続のphaseがない場合は、6th/7th phaseに所属していた日付はどのphaseにも所属しない状態になります。
 
 ```Python
-# A: 
-snl.clear(name="A")
-snl.delete(phases=["last"], name="A").summary(name="A")
+# D: 6th/7th phaseを削除し、29Aug2020以降の所属を破棄
+snl.clear(name="D")
+snl.delete(phases=["last"], name="D").summary(name="D")
 ```
+
+|     | Type   | Start     | End       |   Population |
+|:----|:-------|:----------|:----------|-------------:|
+| 0th | Past   | 06Feb2020 | 21Apr2020 |    126529100 |
+| 1st | Past   | 22Apr2020 | 04Jul2020 |    126529100 |
+| 2nd | Past   | 05Jul2020 | 23Jul2020 |    126529100 |
+| 3rd | Past   | 24Jul2020 | 01Aug2020 |    126529100 |
+| 4th | Past   | 02Aug2020 | 14Aug2020 |    126529100 |
+| 5th | Past   | 15Aug2020 | 28Aug2020 |    126529100 |
+
+
+## 8. phaseの追加
+`Scenario.add()`を使って後続のphaseを追加します。29Aug2020以降がどのphaseにも所属していないScenario Dを例とします。
+
+### (追加) 最終日を指定
+`Scenario.add(end_date="31Aug2020")`のように最終日を指定して新しいphaseを追加できます。
+
+```Python
+# D: 31Aug2020までを6th phaseとして追加
+snl.add(end_date="31Aug2020", name="D").summary(name="D")
+```
+
+|     | Type   | Start     | End       |   Population |
+|:----|:-------|:----------|:----------|-------------:|
+| 0th | Past   | 06Feb2020 | 21Apr2020 |    126529100 |
+| 1st | Past   | 22Apr2020 | 04Jul2020 |    126529100 |
+| 2nd | Past   | 05Jul2020 | 23Jul2020 |    126529100 |
+| 3rd | Past   | 24Jul2020 | 01Aug2020 |    126529100 |
+| 4th | Past   | 02Aug2020 | 14Aug2020 |    126529100 |
+| 5th | Past   | 15Aug2020 | 28Aug2020 |    126529100 |
+| 6th | Past   | 29Aug2020 | 31Aug2020 |    126529100 |
+
+### (追加) 日数を指定
+`Scenario.add(days=10)`のように日数を指定して新しいphaseを追加できます。
+
+```Python
+# D: 01Sep2020 (6th最終日の翌日)から10日間を7thとして追加
+snl.add(days=10, name="D").summary(name="D")
+```
+
+|     | Type   | Start     | End       |   Population |
+|:----|:-------|:----------|:----------|-------------:|
+| 0th | Past   | 06Feb2020 | 21Apr2020 |    126529100 |
+| 1st | Past   | 22Apr2020 | 04Jul2020 |    126529100 |
+| 2nd | Past   | 05Jul2020 | 23Jul2020 |    126529100 |
+| 3rd | Past   | 24Jul2020 | 01Aug2020 |    126529100 |
+| 4th | Past   | 02Aug2020 | 14Aug2020 |    126529100 |
+| 5th | Past   | 15Aug2020 | 28Aug2020 |    126529100 |
+| 6th | Past   | 29Aug2020 | 31Aug2020 |    126529100 |
+| 7th | Past   | 01Sep2020 | 11Sep2020 |    126529100 |
+
+
