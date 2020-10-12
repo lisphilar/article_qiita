@@ -13,6 +13,8 @@ import requests
 @lru_cache
 def get_raw(number):
     """
+    Retrieve contents of the law specified with law number from e-Gov API.
+
     Args:
         number (str): Number of the law, like '平成九年厚生省令第二十八号'
 
@@ -41,6 +43,7 @@ def preprocess_gcp(raw):
         - Strings enclosed with （ and ） will be removed.
         - 「 and 」 will be removed.
     """
+    # contents = raw[:]
     # Remove article 56
     contents = raw[: raw.index("第五十六条")]
     # Select sentenses

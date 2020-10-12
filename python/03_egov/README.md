@@ -1,6 +1,6 @@
-# [Python] e-GOV法令APIより法令本文を取得する
+# [Python] e-GOV法令APIから法令本文を取得する
 
-日本の法令データを[e-Gov法令API](https://www.e-gov.go.jp/elaws/pdf/houreiapi_shiyosyo.pdf)より取得し、法令本文を整形する方法についてまとめました。下記Qiita記事を参考にしています。
+[e-Gov法令API](https://www.e-gov.go.jp/elaws/pdf/houreiapi_shiyosyo.pdf)から日本の法令データを取得して整形する方法についてまとめました。下記Qiita記事を参考にしています。
 
 - [法令APIをGoogle Colab (Python) からアクセスする](https://qiita.com/sakaia/items/c787aa6471e70000d253)
 - [e-Gov法令APIとXML　Pythonを用いた特定ワードが含まれる法令条文の抽出](https://qiita.com/kzuzuo/items/d53ff2e092a69424fea0)
@@ -13,7 +13,7 @@
 自然言語処理の勉強の題材として、仕事でよく確認している省令（J-GCP, 医薬品の臨床試験の実施の基準に関する省令）を使用したかったというのがきっかけです。Twitterの投稿文などとくらべて分量が少ない点は気になりますが、表記ゆれなどが少ないので自然言語処理の題材としても有用ではないかと思いました。
 
 ## 2. 環境
-APIへのアクセスに`requests`（pip installが必要）, XMLデータの解析に`xml`パッケージ（標準ライブラリ）を使用します。`functools.lru_cache`は関数出力のキャッシュ（APIへのアクセス回数をへらすため）、`pprint`は辞書やリストをきれいに表示するため、`re`は正規表現に使用します。
+APIへのアクセスに`requests`（pip installが必要）, XMLデータの解析に`xml`パッケージ（標準ライブラリ）を使用します。`functools.lru_cache`はAPIへのアクセス回数を減らすため（関数出力のキャッシュ）、`pprint`は辞書やリストをきれいに表示するため、`re`は不要な文字列を削除するため（正規表現による文字列削除）に使用します。
 
 ```Python
 # 標準ライブラリ
@@ -29,7 +29,7 @@ import requests
 |:--:|:--:|
 | OS | Windows Subsystem for Linux / Ubuntu |
 | パッケージ管理 | pipenv |
-| Python | version 3.8.5 |
+| Language | Python 3.8.5 |
 | requests | 2.24.0 |
 
 ## 3. 法令番号の取得
@@ -85,30 +85,34 @@ pprint(get_law_dict(category=2), compact=True)
 「辞書{名称: 法令番号}の作成」の`root.iter()`はXMLデータをElement単位に分割してiterationとして返してくれます。なお`root.getiterator()`に置き換えても実行可能ですが、次の通り`DeprecationWarning`が発生するようです。
 
 ```
-DeprecationWarning: This method will be removed in future versions.  Use 'tree.iter()' or 'list(tree.iter())' instead.
+DeprecationWarning: This method will be removed in future versions.
+Use 'tree.iter()' or 'list(tree.iter())' instead.
 ```
 
-また各Elementには`.text`, `.tag`というタグが設定されています。`.tag`が`"LawName"`に一致するElementの`.text`は名称、`.tag`が`"LawNo"`に一致するElementの`.text`は法令番号を保存しているため、下記コードで名称と法令番号の辞書を作成しました。
+また各Elementには`.text`, `.tag`というタグが設定されています。
 
-```Python:get_law_dict() function
-names = [e.text for e in root.iter() if e.tag == "LawName"]
-numbers = [e.text for e in root.iter() if e.tag == "LawNo"]
-return {name: num for (name, num) in zip(names, numbers)}
-```
-
-Elementのイメージ：
+- `.tag == "LawName"`のとき：`.text`は法令の名称を示す
+- `.tag == "LawNo"`のとき：`.text`は法令番号を示す
 
 ```Python:Elementのイメージ
 elements = [
-    (e.tag, e.text) for e in root.iter()
+    f"{e.tag=}, {e.text=}" for e in root.iter()
     if e.tag in set(["LawName", "LawNo"])
 ]
 pprint(elements[:4], compact=False)
 # ->
-[('LawName', '歳入歳出予算概定順序'),
- ('LawNo', '明治二十二年閣令第十二号'),
- ('LawName', '予定経費算出概則'),
- ('LawNo', '明治二十二年閣令第十九号')]
+["e.tag='LawName', e.text='歳入歳出予算概定順序'",
+ "e.tag='LawNo', e.text='明治二十二年閣令第十二号'",
+ "e.tag='LawName', e.text='予定経費算出概則'",
+ "e.tag='LawNo', e.text='明治二十二年閣令第十九号'"]
+```
+
+これを利用して、下記部分にて名称と法令番号の辞書を作成しました。
+
+```Python:get_law_dict()
+names = [e.text for e in root.iter() if e.tag == "LawName"]
+numbers = [e.text for e in root.iter() if e.tag == "LawNo"]
+return {name: num for (name, num) in zip(names, numbers)}
 ```
 
 ### 名称のキーワード検索
@@ -151,6 +155,8 @@ print(get_law_number("医薬品の臨床試験", category=4))
 @lru_cache
 def get_raw(number):
     """
+    Retrieve contents of the law specified with law number from e-Gov API.
+
     Args:
         number (str): Number of the law, like '平成九年厚生省令第二十八号'
 
@@ -179,7 +185,13 @@ pprint(gcp_raw, compact=False)
     "第一章　総則",
     "（趣旨）",
     "第一条",
-    "この省令は、被験者の人権の保護、安全の保持及び福祉の向上を図り、治験の科学的な質及び成績の信頼性を確保するため、医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律（以下「法」という。）第十四条第三項（同条第九項及び法第十九条の二第五項において準用する場合を含む。以下同じ。）並びに法第十四条の四第四項及び第十四条の六第四項（これらの規定を法第十九条の四において準用する場合を含む。以下同じ。）の厚生労働省令で定める基準のうち医薬品の臨床試験の実施に係るもの並びに法第八十条の二第一項、第四項及び第五項に規定する厚生労働省令で定める基準を定めるものとする。",
+    "この省令は、被験者の人権の保護、安全の保持及び福祉の向上を図り、治験の科学的な質及び
+     成績の信頼性を確保するため、医薬品、医療機器等の品質、有効性及び安全性の確保等に関する法律
+    （以下「法」という。）第十四条第三項（同条第九項及び法第十九条の二第五項において準用する
+     場合を含む。以下同じ。）並びに法第十四条の四第四項及び第十四条の六第四項（これらの規定を
+     法第十九条の四において準用する場合を含む。以下同じ。）の厚生労働省令で定める基準のうち
+     医薬品の臨床試験の実施に係るもの並びに法第八十条の二第一項、第四項及び第五項に規定する
+     厚生労働省令で定める基準を定めるものとする。",
     "（定義）",
     "第二条",
 ...
@@ -211,8 +223,8 @@ def preprocess_gcp(raw):
         - Strings enclosed with （ and ） will be removed.
         - 「 and 」 will be removed.
     """
-    # Remove article 56
     # contents = raw[:]
+    # Remove article 56
     contents = raw[: raw.index("第五十六条")]
     # Select sentenses
     contents = [s for s in contents if s.endswith("。")]
@@ -229,18 +241,18 @@ def preprocess_gcp(raw):
 ```Python:J-GCPの整形
 gcp = preprocess_gcp(gcp_raw)
 # ->
-"""薬事法第十四条第三項、第十四条の四第四項並びに第十四条の五第四項、
+"薬事法第十四条第三項、第十四条の四第四項並びに第十四条の五第四項、
 第八十条の二第一項、第四項及び第五項並びに第八十二条の規定に基づき、
 医薬品の臨床試験の実施の基準に関する省令を次のように定める。
 この省令は、被験者の人権の保護、安全の保持及び福祉の向上を図り、
 治験の科学的な質及び成績の信頼性を確保するため、医薬品、医療機器等の品質、
-有効性及び安全性の確保等に関する法律...
-当該治験への参加について文書により同意を得なければならない。"""
+有効性及び安全性の確保等に関する法律...（中略）
+当該治験への参加について文書により同意を得なければならない。"
 ```
 
 第56条を削除する部分については、他の法令の場合は`contents = raw[:]`などに置き換えてください。
 
-### 6. まとめ
+## 6. まとめ
 クラスにまとめました。
 
 ```Python:law_all.py
@@ -365,7 +377,7 @@ class LawLoader(object):
 # The Constitution of Japan
 loader2 = LawLoader(category=2)
 consti_number = loader2.get_law_number("日本国憲法")
-print(consti_number)
+print(consti_number) # -> '昭和二十一年憲法'
 consti_raw = loader2.get_raw("昭和二十一年憲法")
 consti = loader2.pre_process(consti_raw)
 # J-GCP：データ整形を含めてメソッドとして登録済

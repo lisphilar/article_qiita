@@ -26,7 +26,7 @@ def get_law_dict(category=1):
     root = ElementTree.fromstring(r.content.decode(encoding="utf-8"))
     pprint(
         [
-            (e.tag, e.text) for e in root.iter() if e.tag in set(["LawName", "LawNo"])
+            f"{e.tag=}, {e.text=}" for e in root.iter() if e.tag in set(["LawName", "LawNo"])
         ][:4], compact=False)
     names = [e.text for e in root.iter() if e.tag == "LawName"]
     numbers = [e.text for e in root.iter() if e.tag == "LawNo"]

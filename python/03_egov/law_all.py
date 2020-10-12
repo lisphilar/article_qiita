@@ -66,6 +66,8 @@ class LawLoader(object):
 
     def get_raw(self, number):
         """
+        Retrieve contents of the law specified with law number from e-Gov API.
+
         Args:
             number (str): Number of the law, like '平成九年厚生省令第二十八号'
 
